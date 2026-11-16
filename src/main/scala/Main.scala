@@ -16,6 +16,17 @@ object Main {
         loadConfig(true)
 
         var running = true
+        lazy val menu: List[MenuEntry] = List(
+            MenuEntry("policies", "policies", "показать список политик", _ => showPolicies()),
+            MenuEntry("show-policy", "show-policy <имя>", "показать параметры политики", args => showPolicy(args)),
+            MenuEntry("generate", "generate [имя] [--length N]", "сгенерировать пароль", args => generate(args)),
+            MenuEntry("check", "check [имя]", "проверить пароль", args => check(args)),
+            MenuEntry("new-policy", "new-policy", "создать новую политику", _ => newPolicy()),
+            MenuEntry("reload", "reload", "перезагрузить конфигурацию", _ => loadConfig(false)),
+            MenuEntry("help", "help", "показать эту справку", _ => printHelp(menu)),
+            MenuEntry("exit", "exit", "выйти из программы", _ => running = false)
+        )
+
         while (running) {
             print("> ")
             val line = readLine()
@@ -27,22 +38,17 @@ object Main {
                     val original = parts.head
                     val command = original.toLowerCase
                     val arguments = parts.tail
-                    try {
-                        command match {
-                            case "policies" => showPolicies()
-                            case "show-policy" => showPolicy(arguments)
-                            case "generate" => generate(arguments)
-                            case "check" => check(arguments)
-                            case "reload" => loadConfig(false)
-                            case "new-policy" => newPolicy()
-                            case "help" => printHelp()
-                            case "exit" => running = false
-                            case _ => unknownCommand(original)
-                        }
-                    } catch {
-                        case e: Exception =>
-                            println("Внутренняя ошибка приложения. Команда не выполнена, но программа продолжает работу.")
-                            Logger.error("Внутренняя ошибка при выполнении команды " + command + ": " + e.getClass.getName)
+
+                    menu.find(item => item.name == command) match {
+                        case Some(item) =>
+                            try {
+                                item.action(arguments)
+                            } catch {
+                                case e: Exception =>
+                                    println("Внутренняя ошибка приложения. Команда не выполнена, но программа продолжает работу.")
+                                    Logger.error("Внутренняя ошибка при выполнении команды " + command + ": " + e.getClass.getName)
+                            }
+                        case None => unknownCommand(original)
                     }
                 }
             }
@@ -50,6 +56,7 @@ object Main {
 
         Logger.info("Приложение завершено")
     }
+
 
     def pad(s: String, width: Int): String = {
         var result = s
@@ -82,16 +89,11 @@ object Main {
         }
     }
 
-    def printHelp(): Unit = {
+    def printHelp(menu: List[MenuEntry]): Unit = {
         println("Доступные команды:\n")
-        println("  policies                       показать список политик")
-        println("  show-policy <имя>              показать параметры политики")
-        println("  generate [имя] [--length N]    сгенерировать пароль")
-        println("  check [имя]                    проверить пароль")
-        println("  new-policy                     создать новую политику")
-        println("  reload                         перезагрузить конфигурацию")
-        println("  help                           показать эту справку")
-        println("  exit                           выйти из программы")
+        for (item <- menu) {
+            println("  " + pad(item.usage, 32) + item.description)
+        }
     }
 
     def loadConfig(first: Boolean): Unit = {

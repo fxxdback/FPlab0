@@ -328,7 +328,7 @@ object ConfigReader {
             text + " }"
         }
         var json = "{ \"description\": " + quote(p.description) +
-          ", \"minimumLength\": " + p.minimumLength +
+           ", \"minimumLength\": " + p.minimumLength +
           ", \"maximumLength\": " + p.maximumLength +
           ", \"defaultLength\": " + p.defaultLength +
           ", \"characterGroups\": { " + groupTexts.mkString(", ") + " }" +
